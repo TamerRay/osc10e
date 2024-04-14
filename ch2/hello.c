@@ -10,6 +10,7 @@
  * Copyright John Wiley & Sons - 2018
  */
 
+#include <linux/version.h>
 #include <linux/init.h>
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -26,11 +27,16 @@
  */
 static ssize_t proc_read(struct file *file, char *buf, size_t count, loff_t *pos);
 
-static struct file_operations proc_ops = {
-        .owner = THIS_MODULE,
-        .read = proc_read,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(5, 6, 0))
+static struct proc_ops proc_ops = {
+        .proc_read     = proc_read,
 };
-
+#else
+static struct file_operations proc_ops = {
+       .owner = THIS_MODULE,
+       .read = proc_read,
+};
+#endif
 
 /* This function is called when the module is loaded. */
 static int proc_init(void)
@@ -83,7 +89,7 @@ static ssize_t proc_read(struct file *file, char __user *usr_buf, size_t count, 
 
         completed = 1;
 
-        rv = sprintf(buffer, "Hello World\n");
+        rv = sprintf(buffer, MESSAGE);
 
         // copies the contents of buffer to userspace usr_buf
         copy_to_user(usr_buf, buffer, rv);
@@ -99,3 +105,4 @@ module_exit( proc_exit );
 MODULE_LICENSE("GPL");
 MODULE_DESCRIPTION("Hello Module");
 MODULE_AUTHOR("SGG");
+
